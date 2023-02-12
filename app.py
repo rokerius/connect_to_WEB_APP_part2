@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog_info.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data_table.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -29,6 +29,15 @@ def index():
 def about():
     return render_template("about.html")
 
+@app.route('/posts')
+def posts():
+    articles = Article.query.order_by(Article.date.desc()).all()
+    return render_template("posts.html", articles=articles)
+
+@app.route('/posts/<int:id>')
+def posts_detail(id):
+    article = Article.query.get(id)
+    return render_template("post_detail.html", article=article)
 
 @app.route('/create-article', methods=['POST', 'GET'])
 def create_article():
@@ -39,12 +48,12 @@ def create_article():
 
         article = Article(title=title, intro=intro, text=text)
 
-        # try:
-        db.session.add(article)
-        db.session.commit()
-        return redirect('/')
-        # except:
-        #     return "При добавлении произошла ошибка"
+        try:
+            db.session.add(article)
+            db.session.commit()
+            return redirect('/posts')
+        except:
+            return "При добавлении произошла ошибка"
     else:
         return render_template("create-article.html")
 
